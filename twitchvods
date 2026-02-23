@@ -1,0 +1,71 @@
+#!/usr/bin/bash
+if [ -z "$2" ]
+then
+	echo "Usage: ./twitchvods.sh <vod-url or vod-id> <vod-name>"
+	exit 1
+fi
+
+# VOD ID and output filename
+VOD=$1
+FILENAME=$2
+# Optional arguments for vod start and end times
+#VOD_B="-b $3"
+#VOD_E="-e $4"
+
+echo "Let's make some Twitch vods with chat overlay!"
+echo "VOD URL: $VOD"
+echo "VOD filename: $FILENAME"
+
+# Chat settings
+# Chat overlay size
+# Defaults:
+# CHAT_HEIGHT = 540
+# CHAT_WIDTH = 384
+CHAT_HEIGHT=540
+CHAT_WIDTH=384
+# Chat position on screen, x=0 y=0 being top left corner.
+# Defaults:
+# CHAT_POS_X=50
+# CHAT_POS_Y=234
+CHAT_POS_X=50
+CHAT_POS_Y=234 
+# Chat framerate, default 30
+CHAT_FPS=30
+# Chat update rate, default 0
+CHAT_UPD_RATE=0
+# Chat font size, default 18
+CHAT_FONT_SIZE=18
+
+
+# FFmpeg settings
+# preset, default medium
+FFMPEG_PRESET=medium
+# crf value, 0-51, 0 being lossless and 51 most compressed (worst quality)
+# default 23
+FFMPEG_CRF=23
+# Output resolution
+# Default 1920x1080
+OUT_RES="1920x1080"
+
+
+echo "Creating video directory $FILENAME"
+mkdir $FILENAME
+
+echo "Starting chat download"
+./TwitchDownloaderCLI chatdownload --id $VOD -o $FILENAME/$FILENAME-chat.json
+echo "VOD chat downloaded"
+
+echo "Starting VOD chat render..."
+./TwitchDownloaderCLI chatrender -i $FILENAME/$FILENAME-chat.json -h $CHAT_HEIGHT -w $CHAT_WIDTH --framerate $CHAT_FPS --update-rate $CHAT_UPD_RATE --font-size $CHAT_FONT_SIZE -o $FILENAME/$FILENAME-chat.mp4 &
+echo "Chat rendered."
+
+echo "Starting vod download..."
+./TwitchDownloaderCLI videodownload --id $VOD -o $FILENAME/$FILENAME-vod.mp4 &
+echo "Vod download finished."
+
+wait
+
+echo "Inserting the chat overlay using ffmpeg..."
+ffmpeg -i $FILENAME/$FILENAME-vod.mp4 -i $FILENAME/$FILENAME-chat.mp4 -filter_complex "[0:v]scale=$OUT_RES[scaled];[1:v]colorkey=0x111111:0.05:0.1[ckout];[scaled][ckout]overlay=$CHAT_POS_X:$CHAT_POS_Y:format=auto[out]" -map "[out]" -map 0:a -c:v libx264 -preset $FFMPEG_PRESET -crf $FFMPEG_CRF -c:a copy $FILENAME/$FILENAME.mp4
+
+echo "Video render done! Finished file: $FILENAME/$FILENAME.mp4"

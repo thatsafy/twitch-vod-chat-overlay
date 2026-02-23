@@ -1,0 +1,28 @@
+#!/usr/bin/bash
+
+# Twitch VOD+overlay batch renderer
+# Usage: ./batchdl file
+# where file has a vod id and output file name on each line
+# example
+# 2702983222 threedogg-resi-dc
+
+# to-do:
+# - batch render with timestamps (start+end times)
+
+VODFILE=$1
+SCRIPT="twitchvods"
+
+echo "starting with file $VODFILE"
+
+if [ ! -f "$VODFILE" ]; then
+	echo "Error: $VODFILE not found."
+	exit 1
+fi
+
+while IFS= read -r line; do
+	if [ -z "$line" ]; then
+		continue
+	fi
+	echo "Running $SCRIPT for $line"
+	bash $SCRIPT $line
+done < "$VODFILE"
