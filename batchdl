@@ -2,15 +2,11 @@
 
 # Twitch VOD+overlay batch renderer
 # Usage: ./batchdl file
-# where file has a vod id and output file name on each line
-# example
-# 2702983222 threedogg-resi-dc
-
-# to-do:
-# - batch render with timestamps (start+end times)
 
 # input file format:
+# each line should have
 # -i vod-id -o output-file-name -b start-time -e end-time
+# with -b start-time and -e end-time being optional for downloading only part of the vod
 
 # Debug
 # set -x
@@ -18,10 +14,10 @@
 VODFILE=$1
 SCRIPT="twitchvods"
 
-echo "Reading from file: $VODFILE"
+printf "Reading from file: $VODFILE\n"
 
 if [ ! -f "$VODFILE" ]; then
-	echo "Error: $VODFILE not found."
+	printf "Error: $VODFILE not found.\n"
 	exit 1
 fi
 
@@ -29,6 +25,6 @@ while IFS= read -r line; do
 	if [ -z "$line" ]; then
 		continue
 	fi
-	echo "$line"
+	printf -- "$line\n"
 	./$SCRIPT $line < /dev/null
 done < "$VODFILE"

@@ -39,12 +39,19 @@ done
 
 shift $((OPTIND-1))
 
-echo "VODID: $VOD"
-echo "Output file: $FILENAME"
-echo "Start time: $VOD_B"
-echo "End time: $VOD_E"
+printf "VODID: $VOD\nOutput file: $FILENAME\nStart time: $VOD_B\nEnd time: $VOD_E\n"
 
-echo "Let's make some Twitch vods with chat overlay!"
+printf "Let's make some Twitch vods with chat overlay!\n"
+
+# Video download settings
+# Trim mode, Safe / Exact (Default)
+# Exact "may rarely experience video/audio stuttering within the first/last few seconds."
+# "Safe trimming is guaranteed to not stutter but may result in a slightly longer video."
+VOD_DL_TRIM="Exact"
+# Download threads (Parallel downloads), default 4
+VOD_DL_THREADS=4
+# Download limit per thread in KiB/s, default -1 for no limit
+VOD_DL_BWIDTH=-1
 
 # Chat settings
 # Chat overlay size
@@ -65,10 +72,8 @@ CHAT_FPS=30
 CHAT_UPD_RATE=0
 # Chat font size, default 18
 CHAT_FONT_SIZE=18
-# Chat badges, default true
-CHAT_BADGES="true"
-# Message outline, default false
-OUTLINE="true"
+# Chat badges, default false
+CHAT_BADGES="false"
 
 
 
@@ -92,16 +97,16 @@ printf "Starting chat download for $FILENAME\n"
 printf "VOD chat downloaded for $FILENAME\n"
 
 printf "Starting VOD chat render for $FILENAME\n"
-./TwitchDownloaderCLI chatrender -i $FILENAME/$FILENAME-chat.json -h $CHAT_HEIGHT -w $CHAT_WIDTH --framerate $CHAT_FPS --update-rate $CHAT_UPD_RATE --font-size $CHAT_FONT_SIZE --outline=$OUTLINE --badges=$CHAT_BADGES -o $FILENAME/$FILENAME-chat.mp4 &
+./TwitchDownloaderCLI chatrender -i $FILENAME/$FILENAME-chat.json -h $CHAT_HEIGHT -w $CHAT_WIDTH --framerate $CHAT_FPS --update-rate $CHAT_UPD_RATE --font-size $CHAT_FONT_SIZE --badges=$CHAT_BADGES -o $FILENAME/$FILENAME-chat.mp4 &
 printf "Chat rendered for $FILENAME\n"
 
 printf "Starting vod download for $FILENAME\n"
-./TwitchDownloaderCLI videodownload --id $VOD $VOD_B $VOD_E -o $FILENAME/$FILENAME-vod.mp4 &
+./TwitchDownloaderCLI videodownload --id $VOD $VOD_B $VOD_E --trim-mode=$VOD_DL_TRIM --threads=$VOD_DL_THREADS --bandwidth=$VOD_DL_BWIDTH -o $FILENAME/$FILENAME-vod.mp4 &
 printf "Vod download finished.\n"
 
 wait
 
 printf "FFmpgeg render starting...\n"
-ffmpeg -i $FILENAME/$FILENAME-vod.mp4 -i $FILENAME/$FILENAME-chat.mp4 -filter_complex "[0:v]scale=$OUT_RES[scaled];[1:v]colorkey=0x111111:0.05:0.1[ckout];[scaled][ckout]overlay=$CHAT_POS_X:$CHAT_POS_Y:format=auto[out]" -map "[out]" -map 0:a -c:v libx264 -preset $FFMPEG_PRESET -crf $FFMPEG_CRF -c:a copy $FILENAME/$FILENAME.mp4
+ffmpeg -i $FILENAME/$FILENAME-vod.mp4 -i $FILENAME/$FILENAME-chat.mp4 -filter_complex "[0:v]scale=$OUT_RES[scaled];[1:v]colorkey=0x111111:0.01:0.1[ckout];[scaled][ckout]overlay=$CHAT_POS_X:$CHAT_POS_Y:format=auto[out]" -map "[out]" -map 0:a -c:v libx264 -preset $FFMPEG_PRESET -crf $FFMPEG_CRF -c:a copy $FILENAME/$FILENAME.mp4
 
 printf "Video render done! Finished file: $FILENAME/$FILENAME.mp4\n"
