@@ -1,26 +1,56 @@
 #!/usr/bin/bash
-if [ -z "$2" ]
-then
-	echo "Usage: ./twitchvods.sh <vod-url or vod-id> <vod-name>"
-	exit 1
-fi
+#if [ -z "$2" ]
+#then
+#	echo "Usage: ./twitchvods.sh <vod-url or vod-id> <vod-name>"
+#	exit 1
+#fi
 
-# VOD ID and output filename
-VOD=$1
-FILENAME=$2
-# Optional arguments for vod start and end times
-#VOD_B="-b $3"
-#VOD_E="-e $4"
+# Flags
+# -i vod-id
+# -o output-file
+# -b start-time
+# -e end-time
+while getopts "i:o:b:e:h" flag; do
+	case $flag in
+		i) 
+			echo "$OPTARG"
+			VOD="$OPTARG"
+			;;
+		o) 
+			echo "$OPTARG"
+			FILENAME="$OPTARG"
+			;;
+		b)
+			echo "$OPTARG"
+			VOD_B="-b $OPTARG"
+			;;
+		e)
+			echo "$OPTARG"
+			VOD_E="-e $OPTARG"
+			;;
+		h)
+			printf "Usage: $0 [-i VOD-id] [-o output-name] [-b start_time] [-e end_time]\n"
+			printf "Example (start 10 minutes in, end at 20 minutes): \n./twitchvods -i 2698747726 -o test-vod -b 600 -e 1200\n"
+			printf "Example (entire vod): \n./twitchvods -i 2698747726 -o testvod\n"
+			exit 1
+			;;
+	esac
+done
+
+shift $((OPTIND-1))
+
+echo "VODID: $VOD"
+echo "Output file: $FILENAME"
+echo "Start time: $VOD_B"
+echo "End time: $VOD_E"
 
 echo "Let's make some Twitch vods with chat overlay!"
-echo "VOD URL: $VOD"
-echo "VOD filename: $FILENAME"
 
 # Chat settings
 # Chat overlay size
 # Defaults:
-# CHAT_HEIGHT = 540
-# CHAT_WIDTH = 384
+# CHAT_HEIGHT=540
+# CHAT_WIDTH=384
 CHAT_HEIGHT=540
 CHAT_WIDTH=384
 # Chat position on screen, x=0 y=0 being top left corner.
@@ -48,24 +78,25 @@ FFMPEG_CRF=23
 OUT_RES="1920x1080"
 
 
-echo "Creating video directory $FILENAME"
+# Create the working directory
+printf "Creating video directory $FILENAME\n"
 mkdir $FILENAME
 
-echo "Starting chat download"
-./TwitchDownloaderCLI chatdownload --id $VOD -o $FILENAME/$FILENAME-chat.json
-echo "VOD chat downloaded"
+printf "Starting chat download for $FILENAME\n"
+./TwitchDownloaderCLI chatdownload --id $VOD $VOD_B $VOD_E -o $FILENAME/$FILENAME-chat.json
+printf "VOD chat downloaded for $FILENAME\n"
 
-echo "Starting VOD chat render..."
+printf "Starting VOD chat render for $FILENAME\n"
 ./TwitchDownloaderCLI chatrender -i $FILENAME/$FILENAME-chat.json -h $CHAT_HEIGHT -w $CHAT_WIDTH --framerate $CHAT_FPS --update-rate $CHAT_UPD_RATE --font-size $CHAT_FONT_SIZE -o $FILENAME/$FILENAME-chat.mp4 &
-echo "Chat rendered."
+printf "Chat rendered for $FILENAME\n"
 
-echo "Starting vod download..."
-./TwitchDownloaderCLI videodownload --id $VOD -o $FILENAME/$FILENAME-vod.mp4 &
-echo "Vod download finished."
+printf "Starting vod download for $FILENAME\n"
+./TwitchDownloaderCLI videodownload --id $VOD $VOD_B $VOD_E -o $FILENAME/$FILENAME-vod.mp4 &
+printf "Vod download finished.\n"
 
 wait
 
-echo "Inserting the chat overlay using ffmpeg..."
+printf "FFmpgeg render starting...\n"
 ffmpeg -i $FILENAME/$FILENAME-vod.mp4 -i $FILENAME/$FILENAME-chat.mp4 -filter_complex "[0:v]scale=$OUT_RES[scaled];[1:v]colorkey=0x111111:0.05:0.1[ckout];[scaled][ckout]overlay=$CHAT_POS_X:$CHAT_POS_Y:format=auto[out]" -map "[out]" -map 0:a -c:v libx264 -preset $FFMPEG_PRESET -crf $FFMPEG_CRF -c:a copy $FILENAME/$FILENAME.mp4
 
-echo "Video render done! Finished file: $FILENAME/$FILENAME.mp4"
+printf "Video render done! Finished file: $FILENAME/$FILENAME.mp4\n"

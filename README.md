@@ -11,7 +11,18 @@ Download the latest release of this script from [releases](https://github.com/th
 ## How to run
 
 Make the script executable with 'chmod +x twitchvods.sh'.
-Run script ./twitchvods.sh  vod-url/vod-id output-file-name
+
+Run the script: ./twitchvods -i <vod-id> -o <output-file>
+Additionally can use -b and -e to specify beginning and/or end times.
+./twitchvods -i <vod-id> -o <output-file> -b <begin-time> -e <end-time>
+
+### Batch rendering
+With the batchdl script you can use an input file from which to read and download plus render multiple videos.
+Each line in the input file should have:
+-i <vod-i> -o <output-file> [-b <begin-time>] [-e <end-time>]
+where -b and -e are optional flags.
+
+Run the batch render script: ./batchdl <input-file>
 
 The script will first download the vod from twitch, the chat in json format and render the chat into an mp4 file.
 It will then use FFmpeg to overlay the chat mp4 file over the video.
@@ -19,7 +30,4 @@ It will then use FFmpeg to overlay the chat mp4 file over the video.
 Script will create a subdirectory for the output files, $FILENAME/$FILENAME.mp4 + downloaded files.
 
 ## Planned features
-
-- Batch rendering
-- parallel jobs (downloads+render chat file)
-- timestamps?
+- Custom output directory?

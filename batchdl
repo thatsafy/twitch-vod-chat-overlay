@@ -9,10 +9,16 @@
 # to-do:
 # - batch render with timestamps (start+end times)
 
+# input file format:
+# -i vod-id -o output-file-name -b start-time -e end-time
+
+# Debug
+# set -x
+
 VODFILE=$1
 SCRIPT="twitchvods"
 
-echo "starting with file $VODFILE"
+echo "Reading from file: $VODFILE"
 
 if [ ! -f "$VODFILE" ]; then
 	echo "Error: $VODFILE not found."
@@ -23,6 +29,6 @@ while IFS= read -r line; do
 	if [ -z "$line" ]; then
 		continue
 	fi
-	echo "Running $SCRIPT for $line"
-	bash $SCRIPT $line
+	echo "$line"
+	./$SCRIPT $line < /dev/null
 done < "$VODFILE"
