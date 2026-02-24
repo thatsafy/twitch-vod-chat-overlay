@@ -65,11 +65,16 @@ CHAT_FPS=30
 CHAT_UPD_RATE=0
 # Chat font size, default 18
 CHAT_FONT_SIZE=18
+# Chat badges, default true
+CHAT_BADGES="true"
+# Message outline, default false
+OUTLINE="true"
+
 
 
 # FFmpeg settings
 # preset, default medium
-FFMPEG_PRESET=medium
+FFMPEG_PRESET='medium'
 # crf value, 0-51, 0 being lossless and 51 most compressed (worst quality)
 # default 23
 FFMPEG_CRF=23
@@ -87,7 +92,7 @@ printf "Starting chat download for $FILENAME\n"
 printf "VOD chat downloaded for $FILENAME\n"
 
 printf "Starting VOD chat render for $FILENAME\n"
-./TwitchDownloaderCLI chatrender -i $FILENAME/$FILENAME-chat.json -h $CHAT_HEIGHT -w $CHAT_WIDTH --framerate $CHAT_FPS --update-rate $CHAT_UPD_RATE --font-size $CHAT_FONT_SIZE -o $FILENAME/$FILENAME-chat.mp4 &
+./TwitchDownloaderCLI chatrender -i $FILENAME/$FILENAME-chat.json -h $CHAT_HEIGHT -w $CHAT_WIDTH --framerate $CHAT_FPS --update-rate $CHAT_UPD_RATE --font-size $CHAT_FONT_SIZE --outline=$OUTLINE --badges=$CHAT_BADGES -o $FILENAME/$FILENAME-chat.mp4 &
 printf "Chat rendered for $FILENAME\n"
 
 printf "Starting vod download for $FILENAME\n"
