@@ -9,18 +9,26 @@
 # with -b start-time and -e end-time being optional for downloading only part of the vod
 
 # Debug
-# set -x
+#set -x
 
 VODFILE=$1
+if [ -z "$1" ]
+then
+	printf "Missing input file.\nUsage: ./batchdl <input-file>\n"
+	exit 1
+fi
+
 SCRIPT="twitchvods"
 
 printf "Reading from file: $VODFILE\n"
 
+# Check input file exists
 if [ ! -f "$VODFILE" ]; then
 	printf "Error: $VODFILE not found.\n"
 	exit 1
 fi
 
+# Loop through the input file
 while IFS= read -r line; do
 	if [ -z "$line" ]; then
 		continue
